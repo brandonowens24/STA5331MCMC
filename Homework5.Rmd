@@ -1,0 +1,144 @@
+---
+title: "HW5"
+output: html_document
+author: "Brandon Owens"
+date: "2024-03-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r install_packages}
+library(coda)
+library(ggplot2)
+```
+
+
+# Part II
+## Part IIa.
+```{r write_data}
+p1 <- c(11, 17, 16, 14, 15)
+p2 <- c(12, 10, 15, 19, 11)
+p3 <- c(23, 20, 18, 17)
+p4 <- c(27, 33, 22, 26, 28)
+
+sigma <- 3.25
+
+p1_sample_mean <- mean(p1)
+p2_sample_mean <- mean(p2)
+p3_sample_mean <- mean(p3)
+p4_sample_mean <- mean(p4)
+
+p1_std_error <- sigma / sqrt(length(p1))
+p2_std_error <- sigma / sqrt(length(p2))
+p3_std_error <- sigma / sqrt(length(p3))
+p4_std_error <- sigma / sqrt(length(p4))
+
+package_means <- c(p1_sample_mean, p2_sample_mean, p3_sample_mean, p4_sample_mean)
+package_std_errors <- c(p1_std_error, p2_std_error, p3_std_error, p4_std_error)
+
+P = 4
+```
+
+```{r update_functions}
+theta_update <- function(){
+  theta_hat <- (((1/package_std_errors^2)*package_means) + (1/tau^2)*mu)/((1/package_std_errors^2) + (1/tau^2))
+  V_theta <- (1/((1/package_std_errors^2) + (1/tau^2)))
+  rnorm(P, theta_hat, sqrt(V_theta))
+}
+
+mu_update <- function(){
+rnorm(1, mean(theta), tau/sqrt(P))
+}
+
+tau_update <- function(){
+sqrt(sum((theta-mu)^2)/rchisq(1,P-1))
+}
+```
+
+```{r sim}
+iter <- 5000
+sims <- array(NA, c(iter, P+2))
+
+# Starting vals
+mu <- rnorm(1, mean(c(p1,p2,p3,p4)), sigma)
+tau <- runif(1, 0, sigma)
+
+for (i in 1:iter){
+  theta <- theta_update()
+  mu <- mu_update()
+  tau <- tau_update()
+  sims[i,] <- c(theta, mu, tau)
+}
+```
+
+```{r focus_theta4}
+p4 <- sims[, c(4, 6)]
+
+plot(sims[,4],type="l")
+```
+```{r tau}
+plot(sims[,6],type="l")
+```
+
+
+```{r diag}
+raftery.diag(p4[,c(1,2)], q=0.975)
+```
+
+
+> **ANSWER:**
+> Total Chain Length: ~8500
+> Burn-In Length: 8
+> Thinning: Very low dependence factor, thinning may not be necessary. If we are to thin, we will include every other value after the burn in according to the Raferty diagnostic. 
+
+
+## Part IIb.
+
+
+```{r actual mcmc}
+iter <- 8500
+burn <- 8 + 1
+sims2 <- array(NA, c(iter, P+2))
+
+
+# Starting values
+mu <- rnorm(1, mean(c(p1,p2,p3,p4)), sigma)
+tau <- runif(1, 0, sigma)
+
+for (i in 1:iter){
+  theta <- theta_update()
+  mu <- mu_update()
+  tau <- tau_update()
+  sims2[i,] <- c(theta, mu, tau)
+}
+
+x <- sims2[burn:iter, ]
+k=3
+
+x <- x[k*(1:round((iter-burn)/k)), ]
+```
+
+
+```{r hist_4}
+hist(x[,4], breaks=200)
+```
+```{r hist_tau}
+hist(x[,6], breaks=200)
+```
+> **ANSWER**
+> The last homework which focused on an analytical approach here had an extremely similar mean to this MCMC approach. Additionally, the tails of the distribution also appear to vary the same amount (converge near 22 and 32). As for hyperparameter tau, the MCMC also simulated the skewed nature of the distribution, but perhaps captured some larger outliers (also possible from the extended number of sims). With that being said, tau is similar (perhaps just slightly larger), but still has an MLE around the same area (7-12). 
+
+
+## Part IIc.
+
+```{r convergence}
+p4m <- as.mcmc(x[,4])
+taum <- as.mcmc(x[,6])
+
+Mc = mcmc.list(p4m, taum)
+heidel.diag(Mc)
+```
+> **ANSWER**
+> I chose to use the Heidelberger-Welch convergence test where the null hypotehsis is that the chain values are sampled from a stationary distribution. The corresponding p-values for theta4 and tau were 0.158 and 0.605 indicating that they fail to reject the null hypothesis that the chain is sampled from the stationary distribution. Thus, we verify that the chain is retained from the stationary.
