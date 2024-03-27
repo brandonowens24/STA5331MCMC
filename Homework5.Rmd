@@ -88,9 +88,9 @@ raftery.diag(p4[,c(1,2)], q=0.975)
 ```
 
 
-> **ANSWER:**
-> Total Chain Length: ~8500
-> Burn-In Length: 8
+> <span style="color:blue">**ANSWER:**</span><br>
+> Total Chain Length: ~8500 <br>
+> Burn-In Length: 8 <br>
 > Thinning: Very low dependence factor, thinning may not be necessary. If we are to thin, we will include every other value after the burn in according to the Raferty diagnostic. 
 
 
@@ -127,7 +127,8 @@ hist(x[,4], breaks=200)
 ```{r hist_tau}
 hist(x[,6], breaks=200)
 ```
-> **ANSWER**
+
+> <span style="color:blue">**ANSWER:**</span><br>
 > The last homework which focused on an analytical approach here had an extremely similar mean to this MCMC approach. Additionally, the tails of the distribution also appear to vary the same amount (converge near 22 and 32). As for hyperparameter tau, the MCMC also simulated the skewed nature of the distribution, but perhaps captured some larger outliers (also possible from the extended number of sims). With that being said, tau is similar (perhaps just slightly larger), but still has an MLE around the same area (7-12). 
 
 
@@ -140,5 +141,6 @@ taum <- as.mcmc(x[,6])
 Mc = mcmc.list(p4m, taum)
 heidel.diag(Mc)
 ```
-> **ANSWER**
+
+> <span style="color:blue">**ANSWER:**</span><br>
 > I chose to use the Heidelberger-Welch convergence test where the null hypotehsis is that the chain values are sampled from a stationary distribution. The corresponding p-values for theta4 and tau were 0.158 and 0.605 indicating that they fail to reject the null hypothesis that the chain is sampled from the stationary distribution. Thus, we verify that the chain is retained from the stationary.
